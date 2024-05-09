@@ -1,42 +1,53 @@
 #include "brightener.h"
 
-ImageBrightener::ImageBrightener(std::shared_ptr<Image> inputImage): m_inputImage(inputImage) {
+uint8_t brightenPixel(uint8_t inputPixel, uint8_t brighteningGrayscale, int& attenuatedPixelCount) {
+    uint8_t brightened = inputPixel;
+    if (int(inputPixel) + brighteningGrayscale > 255) {
+        ++attenuatedPixelCount;
+        brightened = 255;
+    }
+    else {
+        brightened += brighteningGrayscale;
+    }
+    return brightened;
 }
 
-int ImageBrightener::BrightenWholeImage() {
+shared_ptr<Image> BrightenWholeImage(shared_ptr<Image> inputImage, int& attenuatedPixelCount) {
     // For brightening, we add a certain grayscale (25) to every pixel.
     // While brightening, some pixels may cross the max brightness. They are
     // called 'attenuated' pixels
-    int attenuatedPixelCount = 0;
-    for (int x = 0; x < m_inputImage->m_rows; x++) {
-        for (int y = 0; y < m_inputImage->m_columns; y++) {
-            if (m_inputImage->pixels[x * m_inputImage->m_columns + y] > (255 - 25)) {
-                ++attenuatedPixelCount;
-                m_inputImage->pixels[x * m_inputImage->m_columns + y] = 255;
-            } else {
-                int pixelIndex = x * m_inputImage->m_columns + y;
-                m_inputImage->pixels[pixelIndex] += 25;
+    attenuatedPixelCount = 0;
+    auto brightenedImage = 
+        make_shared<Image>(inputImage->m_rows, inputImage->m_columns,
+            [inputImage, &attenuatedPixelCount](uint8_t* initPixels) {
+            for (int x = 0; x < inputImage->m_rows; x++) {
+                for (int y = 0; y < inputImage->m_columns; y++) {
+                    int index = inputImage->pixelIndex(x, y);
+                    initPixels[index] =
+                        brightenPixel(inputImage->getPixel(x, y), 25, attenuatedPixelCount);
+                }
             }
-        }
-    }
-    return attenuatedPixelCount;
+        });
+    return brightenedImage;
 }
 
-bool ImageBrightener::AddBrighteningImage(std::shared_ptr<Image> imageToAdd, int& attenuatedCount) {
-    if (imageToAdd->m_rows != m_inputImage->m_rows || imageToAdd->m_columns != m_inputImage->m_columns) {
-        return false;
-    }
-    attenuatedCount = 0;
-    for (int x = 0; x < m_inputImage->m_rows; x++) {
-        for (int y = 0; y < m_inputImage->m_columns; y++) {
-            int pixelIndex = x * m_inputImage->m_columns + y;
-            if (int(m_inputImage->pixels[pixelIndex]) + imageToAdd->pixels[pixelIndex] > 255) {
-                ++attenuatedCount;
-                m_inputImage->pixels[pixelIndex] = 255;
-            } else {
-                imageToAdd->pixels[pixelIndex] += m_inputImage->pixels[pixelIndex];
+shared_ptr<Image> AddBrighteningImage(shared_ptr<Image> inputImage, shared_ptr<Image> imageToAdd,
+    int& attenuatedPixelCount) {
+    // Try converting this into an exception, so callers don't always need to check the returned bool
+    // if (imageToAdd->m_rows != m_inputImage->m_rows || imageToAdd->m_columns != m_inputImage->m_columns) {
+    //     return false;
+    // }
+    attenuatedPixelCount = 0;
+    auto brightenedImage =
+        make_shared<Image>(inputImage->m_rows, inputImage->m_columns,
+            [inputImage, imageToAdd, &attenuatedPixelCount](uint8_t* initPixels) {
+            for (int x = 0; x < inputImage->m_rows; x++) {
+                for (int y = 0; y < inputImage->m_columns; y++) {
+                    int index = inputImage->pixelIndex(x, y);
+                    initPixels[index] =
+                        brightenPixel(inputImage->getPixel(x, y), imageToAdd->getPixel(x, y), attenuatedPixelCount);
+                }
             }
-        }
-    }
-    return true;
+    });
+    return brightenedImage;
 }

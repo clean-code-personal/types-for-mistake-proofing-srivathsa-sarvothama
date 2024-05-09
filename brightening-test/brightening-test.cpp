@@ -11,34 +11,28 @@ namespace brighteningtest
 		
 		TEST_METHOD(BrightensWholeImage)
 		{
-			auto image = std::make_shared<Image>(2, 2);
-			image->pixels[0] = 45; image->pixels[1] = 55;
-			image->pixels[2] = 65; image->pixels[3] = 254;
-
-			ImageBrightener brightener(image);
-			int attenuatedCount = brightener.BrightenWholeImage();
-			Assert::AreEqual(1, attenuatedCount);
-			Assert::AreEqual(90, int(image->pixels[2]));
+			auto image = CreateImage(45, 55, 65, 254);
+			int attenuatedPixelCount = 0;
+			auto brightenedImage = BrightenWholeImage(image, attenuatedPixelCount);
+			Assert::AreEqual(1, attenuatedPixelCount);
+			Assert::AreEqual(90, int(brightenedImage->getPixel(1, 0)));
 		}
 
 		TEST_METHOD(BrightensWithAnotherImage)
 		{
-			auto image = std::make_shared<Image>(2, 2);
-			image->pixels[0] = 45; image->pixels[1] = 55;
-			image->pixels[2] = 65; image->pixels[3] = 75;
-            ImageBrightener brightener(image);
-            
-            // Test by brightening only the right part
-            auto brighteningImage = std::make_shared<Image>(2, 2);
-            brighteningImage->pixels[0] = 0; brighteningImage->pixels[1] = 25;
-            brighteningImage->pixels[2] = 0; brighteningImage->pixels[3] = 25;
-
-            int attenuatedCount = 0;
-            bool succeeded = brightener.AddBrighteningImage(brighteningImage, attenuatedCount);
-            Assert::IsTrue(succeeded);
-            Assert::AreEqual(45, int(image->pixels[0])); // left-side pixel is unchanged
-            Assert::AreEqual(80, int(image->pixels[1])); // right-side pixel is brightened
-            Assert::AreEqual(0, attenuatedCount);
+			auto image = CreateImage(45, 55, 65, 75);
+			int attenuatedPixelCount = 0;
+			auto brightenedImage = AddBrighteningImage(
+				image, CreateImage(0, 25, 0, 25), attenuatedPixelCount);
+            Assert::AreEqual(45, int(brightenedImage->getPixel(0, 0))); // left-side pixel is unchanged
+            Assert::AreEqual(80, int(brightenedImage->getPixel(0, 1))); // right-side pixel is brightened
+            Assert::AreEqual(0, attenuatedPixelCount);
+		}
+		shared_ptr<Image> CreateImage(uint8_t topLeft, uint8_t topRight, uint8_t bottomLeft, uint8_t bottomRight) {
+			return make_shared<Image>(2, 2, [=](uint8_t* pixels) {
+				pixels[0] = topLeft; pixels[1] = topRight;
+				pixels[2] = bottomLeft; pixels[3] = bottomRight;
+				});
 		}
 	};
 }

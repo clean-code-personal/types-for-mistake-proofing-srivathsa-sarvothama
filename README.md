@@ -31,6 +31,18 @@ Pure functions can be proven by unit-testing. When their output is treated as im
 
 Overall, it leads to lesser code and lower bugs.
 
-## This assignment
+## This repo
 
-TBD
+Here, we try switching a few parts of the code to the functional paradigm.
+
+We've made the Image class immutable - it can be initialized, but not modified.
+Automatically, it becomes impossible to make the previous assignment's mistake: We cannot alter `imageToAdd` after it has been initialized.
+This is one example of mistake-proofing
+
+We've also made the brightener functionality in a couple of functions. The class was keeping state (data member) only for the sake of one function
+
+## Your assignment
+
+- Add `const` in every opportunity, including the member functions of `Image`
+- The call to `StoreImageAnalytics` has a mistake - it's passing the brightened image instead of the raw image. Try making the "brightened image" as a different class, to catch this error at compile time, then fix it.
+- `AddBrighteningImage` was returning a `bool` to indicate success or failure. Now it returns the brightened image. In general, exceptions are better for expressing errors, than return values. Try throwing an exception in case of failure.
