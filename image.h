@@ -17,11 +17,11 @@ public:
 	bool imageSizeIsValid() {
 		return m_rows <= 1024 && m_columns <= 1024;
 	}
-	uint16_t pixelIndex(uint16_t x, uint16_t y) {
+	uint16_t pixelIndex(const uint16_t x,const uint16_t y) {
 		return x * m_columns + y;
 	}
 	// Change the name of this function... Try a more specific name instead of 'get'
-	uint8_t getPixel(uint16_t x, uint16_t y) {
+	uint8_t getPixel(const uint16_t x,const uint16_t y) {
 		return m_pixels[pixelIndex(x, y)];
 	}
 	void scanPixels(std::function<void(uint8_t, uint16_t, uint16_t)> takePixel) {
@@ -34,4 +34,22 @@ public:
 	const uint16_t m_rows;
 	const uint16_t m_columns;
 	uint8_t* m_pixels; // max 1k x 1k image
+};
+
+class RawImage : public Image
+{
+public:
+    RawImage(uint16_t rows, uint16_t columns, std::function<void(uint8_t*)> pixelInitializer)
+        : Image(rows, columns, pixelInitializer)
+    {
+    }
+};
+
+class BrightenedImage : public Image
+{
+public:
+    BrightenedImage(uint16_t rows, uint16_t columns, std::function<void(uint8_t*)> pixelInitializer)
+        : Image(rows, columns, pixelInitializer)
+    {
+    }
 };
